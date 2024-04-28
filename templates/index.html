@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+{% block content %}
+    Hello {{id}}
+    </p>
+    <a href="{{url}}">{{label}}</a>
+    {% if userinfo.len() > 0 %}
+    </p>
+    <pre>{{userinfo}}</pre>
+    {% endif %}
+
+{% endblock %}
