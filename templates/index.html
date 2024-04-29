@@ -2,12 +2,32 @@
 
 {% block title %}Home{% endblock %}
 {% block content %}
+    {% if id.len() > 0 %}
     Hello {{id}}
+    {% endif %}
     </p>
-    <a href="{{url}}">{{label}}</a>
-    {% if userinfo.len() > 0 %}
+    <a class="a_button" href="{{url}}">{{label}}</a>
+    {% if claims.len() > 0 %}
     </p>
-    <pre>{{userinfo}}</pre>
+    <h2>ID TOKEN CLAIMS</h2>
+    <div class="table-wrapper">
+        <table class="fl-table">
+            <thead>
+                <tr>
+                    <th>Claim</th>
+                    <th>Value</th>
+                </tr>
+                <tbody>
+                    {% for (key,value) in claims %}
+                    <tr>
+                        <td>{{key}}</td>
+                        <td>{{value}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </thead>
+        </table>
+    </div>
     {% endif %}
 
 {% endblock %}

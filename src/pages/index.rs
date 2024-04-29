@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use askama_actix::Template;
 
 #[derive(Template)] // this will generate the code...
@@ -6,5 +8,5 @@ pub struct IndexPage {
     pub id: String,
     pub url: String,
     pub label: String,
-    pub userinfo: String,
+    pub claims: HashMap<String,String>,
 }
