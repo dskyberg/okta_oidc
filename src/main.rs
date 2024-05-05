@@ -71,7 +71,7 @@ async fn main() -> std::io::Result<()> {
     let secret_key = Key::generate();
     let redis_store = RedisSessionStore::new("redis://127.0.0.1:6379")
         .await
-        .unwrap();
+        .expect("Failed to start RedisSessionStore.  Run docker-compose up -d");
 
     let s1 = HttpServer::new(move || {
         App::new()
@@ -92,14 +92,9 @@ async fn main() -> std::io::Result<()> {
     })
     .bind((
         state.config.server_address.as_ref(),
-        state.config.server_port,
+        state.config.server_app_port,
     ))?
     .run();
-
-    info!(
-        " HTTP app server running at http://{}:{}",
-        &state.config.server_address, &state.config.server_port
-    );
 
     let s2 = HttpServer::new(move || {
         App::new()
@@ -107,12 +102,23 @@ async fn main() -> std::io::Result<()> {
             // Mount `TracingLogger` as a middleware
             .wrap(TracingLogger::default())
     })
-    .bind((state.config.server_address.as_ref(), 3006))?
+    .bind((
+        state.config.server_address.as_ref(),
+        state.config.server_admin_port,
+    ))?
     .run();
+
     info!(
-        " HTTP admin server running at http://{}:3006",
-        &state.config.server_address
+        "For the app server, browse to http://{}:{}",
+        &state.config.server_address, &state.config.server_app_port
     );
+
+    info!(
+        "For the admin server, browse to http://{}:{}",
+        &state.config.server_address, &state.config.server_admin_port
+    );
+
+    info!("For telemitry tracing, browse to http://localhost:16686");
 
     future::try_join(s1, s2).await?;
 

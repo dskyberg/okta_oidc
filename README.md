@@ -1,13 +1,31 @@
 # Okta OIDC Resource Server
 
+Okta acts as an Authentication Server for a Rust based app that acts as a Resource Server.  Meaning,
+the browser is NOT the client, and does not need to be trusted.  The Resource Server is the client.
+
+To setup in Okta, create a new Web application integration using OIDC.
+
 This is a Rust based app.  It leverage these services (via Docker):
 - [Valkey](https://valkey.io/) (open source Redis)  for in-memory (not persisted) session management,
 - [Jaeger](https://www.jaegertracing.io/) (OpenTelemetry) for logging/tracing.  
 
+## Client Credentials
+Even though this is just an example app, we will still practice good secret hygiene.  This app uses
+[keyring](https://docs.rs/keyring) to fetch the client_id and client_secret.  
+
+To set up, open Keychain Access and add a password entry in the default login keychain with the following info:
+- Name: okta_oidc
+- Account: <Your Okta app name.  It's probably just `default`>
+- Password: <client_id>:<client_secret>
+
+The first time you run the app, you will be prompted to allow the app to access the keyring entry.  This only allows the app to access this entry - not every entry in your keychain.  That would be bad! 
+
 ## Setup
 There are a few variables that you should set.  Up to you how you manage your environment. 
-I suggest using an `.env` file.  All the vars have defaults (shown) with the exception of 
-`OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`.  So if the defaults work for you, that's all you need to set
+I suggest using an `.env` file.  All the vars have defaults (shown).  So if the defaults work for you, that's all you need to set.
+
+Note, the following shows how to set up client creds also.  But by default, this won't work.  You will need to
+run the app with the `--no-default-features` flag.
 
 In the repo root (same folder as `Cargo.toml`), create a `.env` file and add the following:
     ````bash
