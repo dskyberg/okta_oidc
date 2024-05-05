@@ -4,5 +4,5 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Server did not return an ID TOKEN")]
-    NoIdToken
+    NoIdToken,
 }

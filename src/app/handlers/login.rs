@@ -1,14 +1,24 @@
 use actix_session::Session;
 use actix_web::{http::StatusCode, web, Responder};
-use log::info;
 use openidconnect::core::CoreResponseType;
 use openidconnect::{AuthenticationFlow, CsrfToken, Nonce, Scope};
+use tracing::*;
 
 use crate::AppState;
 
-pub async fn login(session: Session, app_state: web::Data<AppState>) -> actix_web::Result<impl Responder> {
-    
-    let scopes = app_state.config.oidc_scopes.iter().map(|scope| Scope::new(scope.to_owned())).collect::<Vec<Scope>>();
+#[instrument(skip(session, app_state))]
+pub async fn login(
+    session: Session,
+    app_state: web::Data<AppState>,
+) -> actix_web::Result<impl Responder> {
+    let scopes = app_state
+        .config
+        .oidc
+        .scopes
+        .iter()
+        .map(|scope| Scope::new(scope.to_owned()))
+        .collect::<Vec<Scope>>();
+
     // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, csrf_state, nonce) = app_state
         .oidc_client
@@ -32,6 +42,5 @@ pub async fn login(session: Session, app_state: web::Data<AppState>) -> actix_we
 
     // Show the redirect url for fun...
     info!("Redirecting to: {}", &authorize_url);
-
-   Ok(web::Redirect::to(authorize_url.to_string()).using_status_code(StatusCode::FOUND))
+    Ok(web::Redirect::to(authorize_url.to_string()).using_status_code(StatusCode::FOUND))
 }
