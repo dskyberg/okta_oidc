@@ -20,6 +20,12 @@ To set up, open Keychain Access and add a password entry in the default login ke
 
 The first time you run the app, you will be prompted to allow the app to access the keyring entry.  This only allows the app to access this entry - not every entry in your keychain.  That would be bad! 
 
+If you don't want to use keyring, just turn off default features
+
+````bash
+OIDC_CLIENT_ID='<your id>' OIDC_CLIENT_SECRET='<your secret>' cargo run --no-default-features
+````
+
 ## Setup
 There are a few variables that you should set.  Up to you how you manage your environment. 
 I suggest using an `.env` file.  All the vars have defaults (shown).  So if the defaults work for you, that's all you need to set.
