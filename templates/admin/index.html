@@ -7,6 +7,21 @@
   <div class="title"> Okta OIDC Admin</div>
 </div>
 <div class="content">
-  Hello from the admin console
+  <h2>Scopes available from Authorization Server</h2>
+
+  {% for scope in scopes %}
+  <input type="checkbox" id="{{scope}}" name="{{scope}}" value="{{scope}}" />
+  <label for="{{scope}}">{{scope}}</label>
+  <br />
+  {% endfor %}
+
+
+  <h2>Claims available from Authorization Server</h2>
+  <ul>
+    {% for claim in claims %}
+    <li>{{claim}}</li>
+    {% endfor %}
+  </ul>
+
 </div>
 {% endblock %}

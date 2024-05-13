@@ -19,7 +19,10 @@ dotenv = "0.15"
 futures = "0.3"
 lazy_static = "1.4"
 log = "0.4"
-openidconnect = { version = "3.5", features = ["reqwest", "native-tls"] }
+openidconnect = { path = "../openidconnect-rs", features = [
+    "reqwest",
+    "native-tls",
+] }
 opentelemetry = { version = "0.22", features = ["trace", "metrics", "logs"] }
 opentelemetry_sdk = { version = "0.22", features = ["metrics", "rt-tokio"] }
 opentelemetry-otlp = { version = "0.15", features = [

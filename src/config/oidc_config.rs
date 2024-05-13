@@ -1,5 +1,8 @@
 use serde::Deserialize;
 
+/// In order to simply manage the TOML file, to only include what you need, this struct uses serde
+/// default functions.  Since `serde(default)` does not accept closures, functions are defined for
+/// each default value.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct OidcConfig {
@@ -11,14 +14,19 @@ pub struct OidcConfig {
     pub scopes: Vec<String>,
     #[serde(default = "default_amrs")]
     pub amrs: Vec<String>,
-    #[serde(default = "default_verify_aud")]
+    #[serde(default = "default_bool")]
     pub verify_aud: bool,
+    #[serde(default = "default_bool")]
+    pub use_par: bool,
+    #[serde(default = "default_bool")]
+    pub use_pkce: bool,
 }
 
 /// Default scopes for Deserialize
 fn default_scopes() -> Vec<String> {
     vec![String::from("email"), String::from("profile")]
 }
+
 /// Default AMRs for Deserialize
 fn default_amrs() -> Vec<String> {
     vec![
@@ -30,8 +38,8 @@ fn default_amrs() -> Vec<String> {
 }
 
 /// Default verify for Deserialize
-fn default_verify_aud() -> bool {
-    true
+fn default_bool() -> bool {
+    false
 }
 
 impl OidcConfig {
@@ -56,7 +64,9 @@ impl Default for OidcConfig {
             domain: "dskyberg".to_string(),
             scopes: default_scopes(),
             amrs: default_amrs(),
-            verify_aud: true,
+            verify_aud: false,
+            use_par: false,
+            use_pkce: false,
         }
     }
 }

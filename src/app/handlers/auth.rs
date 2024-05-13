@@ -1,14 +1,28 @@
 use actix_session::Session;
-use actix_web::http::StatusCode;
-use actix_web::HttpRequest;
-use actix_web::{error::ErrorInternalServerError, web, Responder};
+use actix_web::{
+    error::ErrorInternalServerError,
+    http::StatusCode,
+    web::{Data, Query, Redirect},
+    HttpRequest, Responder, Result,
+};
+use serde::Deserialize;
+use std::sync::Arc;
 use tracing::*;
 
 //use tracing_attributes::instrument;
-use openidconnect::{AuthorizationCode, CsrfToken, Nonce};
+use openidconnect::{AuthorizationCode, CsrfToken, Nonce, PkceCodeVerifier};
 
-use crate::auth::{exchange_auth_code, AuthRequest};
+use crate::auth::exchange_auth_code;
 use crate::AppState;
+
+/// The authentication response params, returned by the authorization server
+#[derive(Deserialize, Debug)]
+pub struct AuthCodeResponse {
+    /// The auth code that will be exchanged for a token
+    pub code: String,
+    /// If a state value was provided on the redirect, it is returned here
+    pub state: Option<String>,
+}
 
 /// After successfull authentication, the Auth Server redirects the user to this url,
 /// as determined by the `redirect_url` parameter passed on the redirect from /login to the Auth Server's
@@ -19,10 +33,10 @@ use crate::AppState;
 #[instrument(skip(session, app_state, req))]
 pub async fn auth(
     session: Session,
-    app_state: web::Data<AppState>,
-    params: web::Query<AuthRequest>,
+    app_state: Data<Arc<AppState>>,
+    params: Query<AuthCodeResponse>,
     req: HttpRequest,
-) -> actix_web::Result<impl Responder> {
+) -> Result<impl Responder> {
     if let Some(referrer) = req.headers().get("referrer") {
         info!("auth referrer: {:?}", referrer);
     } else {
@@ -30,6 +44,8 @@ pub async fn auth(
     }
 
     info!("Recieved auth_code on front channel: {:?}", &params);
+
+    let pkce_verifier = session.get::<PkceCodeVerifier>("pkce_verifier")?;
 
     // Get the nonce and state from the session, to validate the request
     let Some(nonce) = session.get::<Nonce>("oauth_nonce")? else {
@@ -43,13 +59,16 @@ pub async fn auth(
     session.remove("oauth_nonce");
 
     // The state value provided in the request is returned in the response
-    let _state = CsrfToken::new(params.state.clone());
+    let state = params
+        .state
+        .as_ref()
+        .map(|state| CsrfToken::new(state.clone()));
 
     // The Authorization Code will be exchanged for the token
     let code = AuthorizationCode::new(params.code.clone());
 
     // Exchange the auth code for the token.  This does a back channel call to the Auth Server
-    let userinfo = exchange_auth_code(code, _state, nonce, &app_state)
+    let userinfo = exchange_auth_code(code, state, nonce, &app_state, pkce_verifier)
         .await
         .map_err(ErrorInternalServerError)?;
 
@@ -67,5 +86,5 @@ pub async fn auth(
     session.insert("display_name", display_name)?;
     session.insert("userinfo", serde_json::to_string_pretty(&userinfo)?)?;
 
-    Ok(web::Redirect::to("/").using_status_code(StatusCode::FOUND))
+    Ok(Redirect::to("/").using_status_code(StatusCode::FOUND))
 }

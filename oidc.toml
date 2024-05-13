@@ -6,3 +6,5 @@ session_timeouit = 1
 scopes = ["email", "profile"]
 amrs = ["mfa", "pwd", "user", "hwk"]
 verify_aud = true
+use_par = false
+use_pkce = true

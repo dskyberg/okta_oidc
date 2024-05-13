@@ -32,10 +32,14 @@
 //!
 //!
 
+use std::sync::Arc;
+
 use actix_session::{config::PersistentSession, storage::RedisSessionStore, SessionMiddleware};
 use actix_web::{
     cookie::{time::Duration, Key},
-    middleware, App, HttpServer,
+    middleware,
+    web::Data,
+    App, HttpServer,
 };
 use futures::future;
 use tracing::*;
@@ -57,32 +61,34 @@ async fn main() -> std::io::Result<()> {
 
     // Set environment for logging configuration
     if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
+        std::env::set_var("RUST_LOG", "trace");
     }
-
-    // crate::AppConfig is responsible for loading values from the env.
-    let state = AppState::init().await.expect("AppState::init failed");
-    let app_state = state.clone();
 
     // Set up the OpenTelemetry subscriber
     otel::init_subscriber();
 
+    // crate::AppConfig is responsible for loading values from the env.
+    let state = Arc::new(AppState::init().await.expect("AppState::init failed"));
+    let local_state = state.clone(); // Just for the log messages in main
+    let app_state = state.clone();
+    let admin_state = state.clone();
     // Clone an instance for
     let secret_key = Key::generate();
     let redis_store = RedisSessionStore::new("redis://127.0.0.1:6379")
         .await
         .expect("Failed to start RedisSessionStore.  Run docker-compose up -d");
 
-    let s1 = HttpServer::new(move || {
+    let app_server = HttpServer::new(move || {
         App::new()
-            .configure(app::configure(app_state.clone()))
+            .app_data(Data::new(app_state.clone()))
+            .configure(app::configure())
             // Unfortunately, middleware can't be wrapped by the configure function.  So add it here.
             .wrap(
                 SessionMiddleware::builder(redis_store.clone(), secret_key.clone())
                     // For demo purposes, set the session TTL to just 1 minute.  Change this in .env
                     .session_lifecycle(
                         PersistentSession::default()
-                            .session_ttl(Duration::minutes(app_state.config.session_ttl)),
+                            .session_ttl(Duration::minutes(state.config.session_ttl)),
                     )
                     .build(),
             )
@@ -91,36 +97,37 @@ async fn main() -> std::io::Result<()> {
         //.wrap(TracingLogger::default())
     })
     .bind((
-        state.config.server_address.as_ref(),
-        state.config.server_app_port,
+        local_state.config.server_address.as_ref(),
+        local_state.config.server_app_port,
     ))?
     .run();
 
-    let s2 = HttpServer::new(move || {
+    let admin_server = HttpServer::new(move || {
         App::new()
+            .app_data(Data::new(admin_state.clone()))
             .configure(admin::configure())
             // Mount `TracingLogger` as a middleware
             .wrap(TracingLogger::default())
     })
     .bind((
-        state.config.server_address.as_ref(),
-        state.config.server_admin_port,
+        local_state.config.server_address.as_ref(),
+        local_state.config.server_admin_port,
     ))?
     .run();
 
     info!(
         "For the app server, browse to http://{}:{}",
-        &state.config.server_address, &state.config.server_app_port
+        &local_state.config.server_address, &local_state.config.server_app_port
     );
 
     info!(
         "For the admin server, browse to http://{}:{}",
-        &state.config.server_address, &state.config.server_admin_port
+        &local_state.config.server_address, &local_state.config.server_admin_port
     );
 
     info!("For telemitry tracing, browse to http://localhost:16686");
 
-    future::try_join(s1, s2).await?;
+    future::try_join(app_server, admin_server).await?;
 
     // Ensure all spans have been shipped to the collector.
     // TODO:  This causes exiting th hang

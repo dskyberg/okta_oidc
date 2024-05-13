@@ -1,4 +1,5 @@
 use actix_session::Session;
+use actix_web::Result;
 use serde_json::Value;
 use std::collections::HashMap;
 use tracing::*;
@@ -6,7 +7,7 @@ use tracing::*;
 use crate::app::pages::Index;
 
 #[instrument(skip(session))]
-pub async fn index(session: Session) -> actix_web::Result<Index> {
+pub async fn index(session: Session) -> Result<Index> {
     // Grab session info
     let authenticated = session.get::<bool>("authenticated")?.unwrap_or(false);
     let id = session.get::<String>("username")?.unwrap_or_default();
@@ -27,6 +28,7 @@ pub async fn index(session: Session) -> actix_web::Result<Index> {
     })
 }
 
+/// Helper function to turn UserInfo json stuff into a key,value collection
 fn get_userinfo_claims(userinfo: &str) -> HashMap<String, String> {
     let mut claims: HashMap<String, String> = HashMap::new();
 

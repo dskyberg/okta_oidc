@@ -1,5 +1,5 @@
-use actix_web::Responder;
+use actix_web::{Responder, Result};
 
-pub async fn health() -> impl Responder {
-    "All good\n"
+pub async fn health() -> Result<impl Responder> {
+    Ok("All good\n")
 }

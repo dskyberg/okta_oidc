@@ -11,4 +11,6 @@ pub enum Error {
     NoClientId,
     #[error("No client_secret set in env")]
     NoClientSecret,
+    #[error("Token exchange error: {0}")]
+    AuthRequest(String),
 }
