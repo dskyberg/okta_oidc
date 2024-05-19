@@ -10,21 +10,18 @@ This is a Rust based app.  It leverage these services (via Docker):
 - [Jaeger](https://www.jaegertracing.io/) (OpenTelemetry) for logging/tracing.  
 
 ## Client Credentials
-Even though this is just an example app, we will still practice good secret hygiene.  This app uses
-[keyring](https://docs.rs/keyring) to fetch the client_id and client_secret.  
 
-To set up, open Keychain Access and add a password entry in the default login keychain with the following info:
-- Name: okta_oidc
-- Account: <Your Okta app name.  It's probably just `default`>
-- Password: <client_id>:<client_secret>
+I use 1Password, and the 1Password CLI to manage API tokens. See [export_op_creds](./export_op_creds) to see how I load them into the env.  But you do you.  However you typically manage credentals.
 
-The first time you run the app, you will be prompted to allow the app to access the keyring entry.  This only allows the app to access this entry - not every entry in your keychain.  That would be bad! 
+```bash
+OIDC_CLIENT_ID='<your id>' OIDC_CLIENT_SECRET='<your secret>' cargo run 
+```
+There's also built-in support for [keyring](https://docs.rs/keyring) if you want to use that.
 
-If you don't want to use keyring, just turn off default features
+```bash
+cargo run --features keyring
 
-````bash
-OIDC_CLIENT_ID='<your id>' OIDC_CLIENT_SECRET='<your secret>' cargo run --no-default-features
-````
+```
 
 ## Setup
 There are a few variables that you should set.  Up to you how you manage your environment. 
@@ -34,14 +31,15 @@ Note, the following shows how to set up client creds also.  But by default, this
 run the app with the `--no-default-features` flag.
 
 In the repo root (same folder as `Cargo.toml`), create a `.env` file and add the following:
-    ````bash
-    SERVER_ADDR=127.0.0.1
-    SERVER_PORT=3000
-    SERVER_SESSION_TTL=1
-    OIDC_CLIENT_ID=<YOUR Okta client_id>
-    OIDC_CLIENT_SECRET=<YOUR OKTA client_secret>
-    OTEL_URL=http://localhost:4317
-    ````
+
+  ```sh
+  SERVER_ADDR=127.0.0.1
+  SERVER_PORT=3000
+  SERVER_SESSION_TTL=1
+  OIDC_CLIENT_ID=<YOUR Okta client_id>
+  OIDC_CLIENT_SECRET=<YOUR OKTA client_secret>
+  OTEL_URL=http://localhost:4317
+  ```
 
 The OIDC Resource server also has some configuration options.  Apologies for the redundancy.  I'm 
 reading the entire file with [serde](https://docs.rs/serde) and [toml](https://docs.rs/toml). 

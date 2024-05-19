@@ -44,4 +44,4 @@ tracing-attributes = { version = "0.1", features = ["async-await"] }
 keyring = { version = "2.3", optional = true }
 
 [features]
-default = ["keyring"]
+default = []

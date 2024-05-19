@@ -1,17 +1,19 @@
 version: '3'
 services:
+
   redis:
     container_name: valkey
     image: valkey/valkey:unstable
     ports:
       - 6379:6379
+
   jaeger:
     container_name: jaeger
     image: jaegertracing/all-in-one:latest
     ports:
-      - 6831:6831/udp 
+      - 6831:6831/udp
       - 6832:6832/udp
-      - 5778:5778 
+      - 5778:5778
       - 16686:16686
       - 4317:4317
       - 4318:4318
@@ -19,4 +21,3 @@ services:
       - 14268:14268
       - 14269:14269
       - 9411:9411
-  

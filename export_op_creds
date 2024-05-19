@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Use 1Password CLI to grab credentials
+CREDS=$(op item get --vault dev Okta --fields label=credential,label=username --format json |jq 'map( { (.id | tostring) :.value } ) | add')
+export OIDC_CLIENT_ID=$(echo $CREDS | jq .username)
+export OIDC_CLIENT_SECRET=$(echo $CREDS | jq .credential)
